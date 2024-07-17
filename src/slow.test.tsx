@@ -1,28 +1,28 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { render, waitFor, screen } from "@testing-library/react";
 import { Suspense, use } from "react";
 
 test("does not timeout", async () => {
   const initialPromise = Promise.resolve("test");
-  console.time("executing hook");
-  console.time("asserting");
-  const { result } = renderHook(
-    () => {
-      console.timeLog("executing hook");
-      const result = use(initialPromise);
-      console.log("got result in render", result);
-      return result;
-    },
-    {
-      wrapper: ({ children }) => {
-        return <Suspense fallback={<div>loading</div>}>{children}</Suspense>;
-      },
-    }
+  console.time("executing component render");
+  console.time("got past the `use` call");
+  console.time("assertion succeeded");
+
+  function Component() {
+    console.timeLog("executing component render");
+    const renderResult = use(initialPromise);
+    console.timeLog("got past the `use` call", renderResult);
+    return <div>{renderResult}</div>;
+  }
+
+  render(
+    <Suspense fallback={<div>loading</div>}>
+      <Component />
+    </Suspense>
   );
 
   await waitFor(() => {
-    console.timeLog("asserting");
-    console.log(result);
-    expect(result.current).toEqual("test");
+    screen.getByText("test");
+    console.timeLog("assertion succeeded");
   });
 }); //, 300
 /** adding the 300ms timeout above would make this test fail */
